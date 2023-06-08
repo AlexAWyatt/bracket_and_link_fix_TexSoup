@@ -55,7 +55,10 @@ def fix_brackets(filename, encoder = "utf-8"):
     f = open(filename,'r', encoding = encoder) # assuming other languages will be supported in TexSoup
     w = open(fileroot+'_fixed'+extension, 'w', encoding = encoder)
 
-    while k:=f.read(1):
+    while True:
+        k = f.read(1)
+        if not k:
+            break
         if (k in brackets):
             w.write(__encapsulate_bad_brackets(file = f, brack = k))
 
@@ -97,7 +100,12 @@ def __encapsulate_bad_brackets(file, brack):
     stringlist = []
     stmp = brack
 
-    while k:=file.read(1):
+    while True:
+        k = file.read(1)
+        if not k and True:
+            #
+            break
+
         if len(stack) == 0: # detects if stack is empty therefore all brackets closed
             stmp += k
             break 
@@ -165,7 +173,12 @@ def __link_check_fix(file):
             return k
 
     stmp = k
-    while k:=file.read(1):
+    while True:
+        k = file.read(1)
+        if not k and True:
+            #
+            break
+
         if k == "%":
             stmp += "\\" + k
 
