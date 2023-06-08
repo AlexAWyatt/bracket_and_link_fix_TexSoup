@@ -103,7 +103,6 @@ def __encapsulate_bad_brackets(file, brack):
     while True:
         k = file.read(1)
         if not k and True:
-            #
             break
 
         if len(stack) == 0: # detects if stack is empty therefore all brackets closed
@@ -176,7 +175,6 @@ def __link_check_fix(file):
     while True:
         k = file.read(1)
         if not k and True:
-            #
             break
 
         if k == "%":
