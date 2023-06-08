@@ -1,0 +1,186 @@
+# ASSUMPTION: There are no bracket errors in the document, so all unequal brackets are VALID ie. The number of open brackets in the document matches the number of closed brackets
+
+""" Use Case: Allows TexSoup to correctly parse LaTeX documents that contain mismatched brackets and/or links containing '%' signs
+- NOTE: for links, the relevant command must be included in the 'LINK_COMMANDS' constant, and the link must be the FIRST ARGUMENT of the relevant command (can fix for this in future if required)
+
+The output '.tex' file will have '_fixed' appended to the filename and the document itself will be changed, but it will render the same as before. There is no change in rendered content. 
+The only effect is allowing TexSoup to parse without error.
+ """
+
+# List of commands that pass links as arguments, feel free to add to, link must be FIRST ARGUMENT in this version
+LINK_COMMANDS = ['href', 'url']
+
+
+def fix_brackets(filename, encoder = "utf-8"):
+    r"""Takes a provided relative filepath 'filename' for a text file (.tex intended). Fixes unmatched brackets by encompassing in curly brackets and fixes links that include '%' characters
+    by prepending an escape character '\'.
+
+    Args:
+        filename (str): filename of file to be 'fixed', include relative path from current working directory
+        encoder (str): encoding type passed to file reader and writer ie: "utf-8", "ascii"
+
+    Example Unmatched Brackets:
+        Input Text: $(0, 32)]$
+        Output Text: ${(0,32]}$
+
+    Example Link:
+        Input Text: \href{https://en.wikipedia.org/wiki/Zermelo%E2%80%93Fraenkel_set_theory}{ZFC Axioms}
+        Output Text: \href{https://en.wikipedia.org/wiki/Zermelo\%E2\%80\%93Fraenkel_set_theory}{ZFC Axioms}
+
+        Input Text:\url{https://en.wikipedia.org/wiki/Zermelo%E2%80%93Fraenkel_set_theory}
+        Output Text:\url{https://en.wikipedia.org/wiki/Zermelo\%E2\%80\%93Fraenkel_set_theory}
+
+    Example Complex:
+        Input Text:
+                \url{https://en.wikipedia.org/wiki/Zermelo%E2%80%93Fraenkel_set_theory}
+                $[ 0 \text{ random mismatched in tex [3, 4)} [\inf, 4 ( 45, \inf) 32)]$
+                \href{https://en.wikipedia.org/wiki/Construction_of_the_real_numbers}{ZFC Axioms}
+        Output Text: 
+                \url{https://en.wikipedia.org/wiki/Zermelo\%E2\%80\%93Fraenkel_set_theory}
+                $[ 0 \text{ random mismatched in tex {[3, 4)}} {[\inf, 4 ( 45, \inf) 32)}]$
+                \href{https://en.wikipedia.org/wiki/Construction_of_the_real_numbers}{ZFC Axioms}"""
+
+    # Ensure list of relevant link commands is sorted by length
+    LINK_COMMANDS.sort(key = len)
+
+    extension = "." + filename.split(".")[-1]
+    filenamelist = filename.split(".")[0:-1]
+
+    fileroot = ""
+
+    for i in filenamelist:
+        fileroot += i
+
+    brackets = "[("
+    f = open(filename,'r', encoding = encoder) # assuming other languages will be supported in TexSoup
+    w = open(fileroot+'_fixed'+extension, 'w', encoding = encoder)
+
+    while k:=f.read(1):
+        if (k in brackets):
+            w.write(__encapsulate_bad_brackets(file = f, brack = k))
+
+        # To catch and fix 'href' link errors (percentage sign in link)
+        elif k == "\\":
+            w.write(k)
+            w.write(__link_check_fix(file = f))
+        
+        else:
+            w.write(k)
+
+    f.close()
+    w.close()
+        
+
+def __encapsulate_bad_brackets(file, brack):
+    r"""Identifies open brackets '[' or '(' and all characters read between them. If a bracket is closed by another bracket that does not match it, encapsulates the
+    unmatched brackets statement with outer curly braces ie. [\inf, 3) -> {[\inf, 3)}
+
+    Args:
+        file (TextIOWrapper): Input stream reading from a given file
+        brack (str): the last character read, a bracket either '[' or '('
+
+    Returns:
+        str: all text read from the input parameter open bracket 'brack' to the bracket that closes said statement, with any mismatched bracketed statements now
+        enclosed in curly braces
+
+    Example Unmatched Brackets:
+        Input Text: $(0, 32)]$
+        Output Text: ${(0,32]}$
+
+    Example Nested Unmatched Brackets:
+        Input Text: $[ [\inf, (,) 32) ]$
+        Ouput Text: $[ {[\inf, (,) 32)} ]$
+    """
+
+    stack = [brack]
+    brackets = {"[":"]", "(":")"}
+    stringlist = []
+    stmp = brack
+
+    while k:=file.read(1):
+        if len(stack) == 0: # detects if stack is empty therefore all brackets closed
+            stmp += k
+            break 
+        elif k in "[(": 
+            stack.append(k)
+            stringlist.append(stmp)
+            stmp = k
+        elif k not in "])":
+            stmp += k
+        elif k == brackets[stack[-1]]:
+            stack.pop()
+            stmp += k
+            if stringlist:
+                stmp = stringlist.pop() + stmp 
+                #append the current matched brackets to the prior unclosed string, store in the temporary string then remove final cell of list
+            elif not stringlist: # as an else statement this gets skipped, negation elif statement used
+                break 
+
+        else: #unmatched brackets
+
+            stmp = "{" + stmp + k + "}"
+            stack.pop()  
+            if stringlist:
+                stmp = stringlist.pop() + stmp
+    
+    return stmp
+
+
+def __link_check_fix(file):
+    r"""Identifies whether a command relates to a link, if so, checkes for any '%' characters within the link and prepends an escape character '%' to all found.
+
+    Args:
+        file (TextIOWrapper): Input stream reading from a given file
+
+    Returns:
+        str: all text read from file with any '%' sign in links prepending with an escape character
+
+    Examples:
+        Input Text: href{https://en.wikipedia.org/wiki/Zermelo%E2%80%93Fraenkel_set_theory}{ZFC Axioms}
+        Output Text: href{https://en.wikipedia.org/wiki/Zermelo\%E2\%80\%93Fraenkel_set_theory}{ZFC Axioms}
+
+        Input Text:url{https://en.wikipedia.org/wiki/Zermelo%E2%80%93Fraenkel_set_theory}
+        Output Text:url{https://en.wikipedia.org/wiki/Zermelo\%E2\%80\%93Fraenkel_set_theory}
+
+        Input Text:href{https://en.wikipedia.org/wiki/Construction_of_the_real_numbers}{Construction of Real Numbers}
+        Output Text:href{https://en.wikipedia.org/wiki/Construction_of_the_real_numbers}{Construction of Real Numbers}
+
+        Input Text: textbf
+        Output Text: textbf
+    """
+
+    k = file.read(len(LINK_COMMANDS[0]))
+
+    for i in LINK_COMMANDS:
+        if len(i) == len(k):
+            if k in LINK_COMMANDS:
+                break
+        elif len(i) > len(k):
+            k += file.read(len(i)-len(k))
+            if k in LINK_COMMANDS:
+                break
+        
+        #All relevant commands checked, none are for links, return all text read
+        if i == LINK_COMMANDS[-1]:
+            return k
+
+    stmp = k
+    while k:=file.read(1):
+        if k == "%":
+            stmp += "\\" + k
+
+        elif k == "}":
+            stmp += k
+            break
+
+        else:
+            stmp +=k
+
+    return stmp
+
+### below here is not covered on tests
+def main():
+    fix_brackets("MAT2125-Elementary_real_analysis orig.tex", "utf-8")
+
+if __name__ == '__main__':
+    main()
