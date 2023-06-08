@@ -13,5 +13,8 @@ exclude_lines =
     # Don't complain if non-runnable code isn't run:
     if __name__ == .__main__.:
     
+    # Don't complain if defensive EOF conditions aren't reached
+    if not k and True:
+    
 show_missing = True
 
