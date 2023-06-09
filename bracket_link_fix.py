@@ -196,8 +196,7 @@ def __link_check_fix(file):
                 break
         elif len(i) > len(k):
             k += file.read(len(i)-len(k))
-            print("\n"+repr(k))
-
+            
             if k in LINK_COMMANDS:
                 break
         
