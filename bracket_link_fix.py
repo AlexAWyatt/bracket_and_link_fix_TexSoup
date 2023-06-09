@@ -7,6 +7,8 @@ The output '.tex' file will have '_fixed' appended to the filename and the docum
 The only effect is allowing TexSoup to parse without error.
  """
 
+import re
+
 # List of commands that pass links as arguments, feel free to add to, link must be FIRST ARGUMENT in this version
 LINK_COMMANDS = ['href', 'url']
 
@@ -65,7 +67,22 @@ def fix_brackets(filename, encoder = "utf-8"):
         # To catch and fix 'href' link errors (percentage sign in link)
         elif k == "\\":
             w.write(k)
-            w.write(__link_check_fix(file = f))
+            linkcheck_string = __link_check_fix(file = f)
+            split_str = ""
+
+            # accounting for when characters read by link_check_fix include brackets
+            for i in linkcheck_string:
+                if i in brackets:
+                    chck = "(\\" + i + ")"
+                    split_str = re.split(chck, linkcheck_string)
+                    break
+                
+            if type(split_str) == str:
+                w.write(linkcheck_string)
+            else:
+                w.write(split_str[0])
+                aft_brack = "".join(split_str[1:])
+                w.write(__encapsulate_bad_brackets(file = f, chk_str=aft_brack))
         
         else:
             w.write(k)
@@ -74,13 +91,14 @@ def fix_brackets(filename, encoder = "utf-8"):
     w.close()
         
 
-def __encapsulate_bad_brackets(file, brack):
+def __encapsulate_bad_brackets(file, brack = "", chk_str = ""):
     r"""Identifies open brackets '[' or '(' and all characters read between them. If a bracket is closed by another bracket that does not match it, encapsulates the
     unmatched brackets statement with outer curly braces ie. [\inf, 3) -> {[\inf, 3)}
 
     Args:
         file (TextIOWrapper): Input stream reading from a given file
         brack (str): the last character read, a bracket either '[' or '('
+        chk_str (str): previously read characters that aren't checked for brackets
 
     Returns:
         str: all text read from the input parameter open bracket 'brack' to the bracket that closes said statement, with any mismatched bracketed statements now
@@ -95,13 +113,23 @@ def __encapsulate_bad_brackets(file, brack):
         Ouput Text: $[ {[\inf, (,) 32)} ]$
     """
 
-    stack = [brack]
     brackets = {"[":"]", "(":")"}
     stringlist = []
+
+    if not brack:
+        brack = chk_str[0]
+
+    stack = [brack]
+    index = 1
     stmp = brack
 
     while True:
-        k = file.read(1)
+        if index < len(chk_str):
+            k = chk_str[index]
+            index += 1
+        else:
+            k = file.read(1)
+        
         if not k and True:
             break
 
@@ -129,6 +157,10 @@ def __encapsulate_bad_brackets(file, brack):
             stack.pop()  
             if stringlist:
                 stmp = stringlist.pop() + stmp
+
+    while index < len(chk_str):
+        stmp += chk_str[index]
+        index += 1
     
     return stmp
 
@@ -164,6 +196,8 @@ def __link_check_fix(file):
                 break
         elif len(i) > len(k):
             k += file.read(len(i)-len(k))
+            print("\n"+repr(k))
+
             if k in LINK_COMMANDS:
                 break
         
@@ -191,7 +225,7 @@ def __link_check_fix(file):
 
 ### below here is not covered on tests
 def main():
-    fix_brackets("test\\sample\\href_url_brackets.tex", "utf-8")
+    fix_brackets("tests\\sample\\brack_test10.tex", "utf-8")
 
 if __name__ == '__main__':
     main()

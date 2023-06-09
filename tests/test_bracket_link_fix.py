@@ -32,15 +32,18 @@ def test_fix_brackets():
 
     with open("sample\\brack_test9_exp.tex",'r', encoding = encoder) as f:
         expected9 = f.read()
-
-    with open("sample\\href_only_exp.tex", 'r', encoding = encoder) as f:
+    
+    with open("sample\\brack_test10_exp.tex",'r', encoding = encoder) as f:
         expected10 = f.read()
 
-    with open("sample\\url_only_exp.tex", 'r', encoding = encoder) as f:
+    with open("sample\\href_only_exp.tex", 'r', encoding = encoder) as f:
         expected11 = f.read()
 
-    with open("sample\\href_url_brackets_exp.tex", 'r', encoding = encoder) as f:
+    with open("sample\\url_only_exp.tex", 'r', encoding = encoder) as f:
         expected12 = f.read()
+
+    with open("sample\\href_url_brackets_exp.tex", 'r', encoding = encoder) as f:
+        expected13 = f.read()
 
     bracket_link_fix.fix_brackets("sample\\brack_test1.tex", encoder)
     bracket_link_fix.fix_brackets("sample\\brack_test2.tex", encoder)
@@ -51,6 +54,7 @@ def test_fix_brackets():
     bracket_link_fix.fix_brackets("sample\\brack_test7.tex", encoder)
     bracket_link_fix.fix_brackets("sample\\brack_test8.tex", encoder)
     bracket_link_fix.fix_brackets("sample\\brack_test9.tex", encoder)
+    bracket_link_fix.fix_brackets("sample\\brack_test10.tex", encoder)
     bracket_link_fix.fix_brackets("sample\\href_only.tex", encoder)
     bracket_link_fix.fix_brackets("sample\\url_only.tex", encoder)
     bracket_link_fix.fix_brackets("sample\\href_url_brackets.tex", encoder)
@@ -101,18 +105,23 @@ def test_fix_brackets():
 
     os.remove("sample\\brack_test9_fixed.tex")
 
-    with open("sample\\href_only_fixed.tex",'r', encoding = encoder) as f:
+    with open("sample\\brack_test10_fixed.tex",'r', encoding = encoder) as f:
         actual10 = f.read()
+
+    os.remove("sample\\brack_test10_fixed.tex")
+
+    with open("sample\\href_only_fixed.tex",'r', encoding = encoder) as f:
+        actual11 = f.read()
 
     os.remove("sample\\href_only_fixed.tex")
 
     with open("sample\\url_only_fixed.tex",'r', encoding = encoder) as f:
-        actual11 = f.read()
+        actual12 = f.read()
 
     os.remove("sample\\url_only_fixed.tex")
 
     with open("sample\\href_url_brackets_fixed.tex",'r', encoding = encoder) as f:
-        actual12 = f.read()
+        actual13 = f.read()
 
     os.remove("sample\\href_url_brackets_fixed.tex")
 
@@ -128,4 +137,5 @@ def test_fix_brackets():
     assert actual10 == expected10
     assert actual11 == expected11
     assert actual12 == expected12
+    assert actual13 == expected13
 
