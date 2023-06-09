@@ -191,7 +191,7 @@ def __link_check_fix(file):
 
 ### below here is not covered on tests
 def main():
-    fix_brackets("MAT2125-Elementary_real_analysis orig.tex", "utf-8")
+    fix_brackets("test\\sample\\href_url_brackets.tex", "utf-8")
 
 if __name__ == '__main__':
     main()
