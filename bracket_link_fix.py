@@ -105,7 +105,7 @@ def __encapsulate_bad_brackets(file, brack = "", chk_str = ""):
         enclosed in curly braces
 
     Example Unmatched Brackets:
-        Input Text: $(0, 32)]$
+        Input Text: $(0, 32]$
         Output Text: ${(0,32]}$
 
     Example Nested Unmatched Brackets:
