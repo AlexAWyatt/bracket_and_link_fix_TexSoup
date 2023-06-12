@@ -2,10 +2,10 @@
 
 An optional fix for TexSoup parsing errors on documents with unmatched brackets:
 
-- ie. [ x , y ) 
+- ie [ x , y ) 
 
 and hyperlinks containing '%' signs: 
-- ie. href{random.domain.com/look%E2%80here}{Rendered Name}
+- ie href{random.domain.com/look%E2%80here}{Rendered Name}
 
 ---
 Creates a new version of your LaTeX document that is both LaTeX render-safe and TexSoup parse-safe, without changing the rendered output.
